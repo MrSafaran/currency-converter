@@ -1,16 +1,23 @@
+import os
 import requests
 from cachetools import cached, TTLCache
 
 cache = TTLCache(maxsize=100, ttl=20)
-
+API_KEY = os.getenv("EXCHANGERATE_API_KEY")
 
 @cached(cache)
 def get_exchange_rate(base_currency, target_currency):
-    url = f"https://v6.exchangerate-api.com/v6/d5418905a087fe4b6f85408c/latest/{base_currency}"
-    response = requests.get(url)
-    result =response.json()['conversion_rates'][target_currency]
+    if not API_KEY:
+        return None
+    
+    try:
+        url = f"https://v6.exchangerate-api.com/v6/{API_KEY}/latest/{base_currency}"
+        response = requests.get(url)
+        result =response.json()['conversion_rates'][target_currency]
 
-    return float(result)
+        return float(result)
+    except(requests.RequestException, ValueError):
+        return None
 
 def convert_currency(amount, exchange_rate):
     return amount * exchange_rate
